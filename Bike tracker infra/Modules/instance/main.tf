@@ -21,6 +21,6 @@ resource "aws_instance" "BT_instance" {
     ami           = var.ami_id
     instance_type = var.instance_type
     subnet_id     = module.VPC.BT_pub_Subnet_id
-    
+    key_name = aws_key_pair.key.key_name
 
 }
