@@ -10,3 +10,13 @@ variable "instance_type" {
 variable "key_name" {
  type = string 
 }
+
+variable "volume_size" {
+    type = string
+  
+}
+
+variable "volume_type" {
+    type = string
+  
+}
