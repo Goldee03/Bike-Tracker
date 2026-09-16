@@ -22,5 +22,14 @@ resource "aws_instance" "BT_instance" {
     instance_type = var.instance_type
     subnet_id     = module.VPC.BT_pub_Subnet_id
     key_name = aws_key_pair.key.key_name
+    vpc_security_group_ids = module.security_group_id
+
+    root_block_device {
+      volume_size = var.volume_size
+      volume_type = var.volume_type
+      encrypted = true
+      delete_on_termination = true
+      
+    }
 
 }
