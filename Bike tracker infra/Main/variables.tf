@@ -16,4 +16,39 @@ variable "pvt_subnet_cidr" {
 }
 
 
+####################################################################
+
+variable "subnet_id" {
+    type = string
+  
+}
+
+variable "security_group_id" {
+    type = list(string)
+  
+}
+
+variable "ami_id"{
+    type = string
+}
+
+variable "instance_type" {
+    type = string
+  
+}
+
+variable "key_name" {
+ type = string 
+}
+
+variable "volume_size" {
+    type = string
+  
+}
+
+variable "volume_type" {
+    type = string
+  
+}
+
 

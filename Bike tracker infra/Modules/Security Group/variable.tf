@@ -29,7 +29,6 @@ variable "egress_rules" {
 
       default = [
     {
-      description = "Allow all outbound traffic"
       from_port   = 0
       to_port     = 0
       protocol    = "-1"
