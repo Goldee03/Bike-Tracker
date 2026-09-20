@@ -18,15 +18,15 @@ variable "pvt_subnet_cidr" {
 
 ####################################################################
 
-variable "subnet_id" {
-    type = string
-  
-}
-
-variable "security_group_id" {
-    type = list(string)
-  
-}
+#variable "subnet_id" {
+#    type = string
+#  
+#}
+#
+#variable "security_group_id" {
+#    type = list(string)
+#  
+#}
 
 variable "ami_id"{
     type = string
@@ -42,7 +42,7 @@ variable "key_name" {
 }
 
 variable "volume_size" {
-    type = string
+    type = number
   
 }
 

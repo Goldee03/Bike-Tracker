@@ -6,6 +6,5 @@ module "instance" {
     key_name = var.key_name
     volume_size = var.volume_size
     volume_type = var.volume_type
-    security_group_id = module.security_groups.id
-  
+    security_group_id = module.security_groups.security_group_id
 }

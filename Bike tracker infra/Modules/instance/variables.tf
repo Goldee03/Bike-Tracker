@@ -4,7 +4,7 @@ variable "subnet_id" {
 }
 
 variable "security_group_id" {
-    type = list(string)
+    type = string
   
 }
 
@@ -22,7 +22,7 @@ variable "key_name" {
 }
 
 variable "volume_size" {
-    type = string
+    type = number
   
 }
 
