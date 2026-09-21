@@ -7,7 +7,7 @@ module "security_groups" {
         {
           from_port = 0
           to_port = 65535
-          protocol = "all tcp"
+          protocol = "tcp"
           cidr_blocks = ["0.0.0.0/0"]
         }
     ]
