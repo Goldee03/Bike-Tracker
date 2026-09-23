@@ -28,27 +28,27 @@ variable "pvt_subnet_cidr" {
 #  
 #}
 
-variable "ami_id"{
-    type = string
+variable "ami_id" {
+  type = string
 }
 
 variable "instance_type" {
-    type = string
-  
+  type = string
+
 }
 
 variable "key_name" {
- type = string 
+  type = string
 }
 
 variable "volume_size" {
-    type = number
-  
+  type = number
+
 }
 
 variable "volume_type" {
-    type = string
-  
+  type = string
+
 }
 
 
