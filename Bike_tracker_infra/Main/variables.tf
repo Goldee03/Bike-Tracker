@@ -51,4 +51,28 @@ variable "volume_type" {
 
 }
 
+####################################################
+#app instance variables
 
+variable "app_ami_id" {
+  type = string
+}
+
+variable "app_instance_type" {
+  type = string
+
+}
+
+variable "app_key_name" {
+  type = string
+}
+
+variable "app_volume_size" {
+  type = number
+
+}
+
+variable "app_volume_type" {
+  type = string
+
+}
