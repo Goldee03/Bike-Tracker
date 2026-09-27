@@ -11,7 +11,7 @@ volume_type     = "gp3"
 #Pvt instance values
 app_ami_id          = "ami-0b6d9d3d33ba97d99"
 app_instance_type   = "c7i-flex.large"
-app_key_name        = "bike-tracker-key"
+app_key_name        = "bike-tracker-app-key"
 app_volume_size     = 8
 app_volume_type     = "gp3"
 

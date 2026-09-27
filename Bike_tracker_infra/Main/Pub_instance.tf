@@ -1,4 +1,4 @@
-module "instance" {
+module "bastion" {
     source = "../Modules/instance"
     ami_id = var.ami_id
     subnet_id = module.VPC.BT_pub_Subnet_id

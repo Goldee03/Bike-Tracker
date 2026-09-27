@@ -1,4 +1,4 @@
-module "instance" {
+module "app_instance" {
   source            = "../Modules/instance"
   ami_id            = var.ami_id
   subnet_id         = module.VPC.BT_pvt_Subnet_id
