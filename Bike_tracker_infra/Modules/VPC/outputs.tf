@@ -3,6 +3,11 @@ output "BT_pub_Subnet_id" {
   
 }
 
+output "BT_pvt_Subnet_id" {
+    value = aws_subnet.BT_pvt_Subnet.id
+  
+}
+
 output "vpc_id" {
     value = aws_vpc.BT_VPC.id
   
