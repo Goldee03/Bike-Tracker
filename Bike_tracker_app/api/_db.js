@@ -5,8 +5,12 @@ const crypto = require('crypto');
 let pool;
 function getPool() {
   if (!pool) {
+    // Prefer DATABASE_URL, fall back to the Supabase/Neon integration's POSTGRES_URL
+    let url = (process.env.DATABASE_URL || process.env.POSTGRES_URL || '').trim().replace(/^['"]|['"]$/g, '');
+    // Drop sslmode/supa params; SSL is configured explicitly below
+    url = url.replace(/[?&](sslmode|supa)=[^&]*/g, (m, k, i) => (m[0] === '?' ? '?' : '')).replace(/\?&/, '?').replace(/\?$/, '');
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: url,
       ssl: { rejectUnauthorized: false },
       max: 1,
       idleTimeoutMillis: 10000,
