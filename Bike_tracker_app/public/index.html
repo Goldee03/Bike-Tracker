@@ -299,9 +299,21 @@ function applyBulkBatches(parsed){
 }
 
 let loadOk = false; // never save over the DB if the initial load failed
+function authHeaders(extra){
+  const h = Object.assign({}, extra||{});
+  try{ const pw = localStorage.getItem('bt_pw'); if(pw) h['X-App-Password'] = pw; }catch(e){}
+  return h;
+}
 async function loadData(){
   try{
-    const res = await fetch('/api/data');
+    let res = await fetch('/api/data', {headers: authHeaders()});
+    if(res.status === 401){
+      const pw = prompt('Enter app password');
+      if(pw){
+        try{ localStorage.setItem('bt_pw', pw); }catch(e){}
+        res = await fetch('/api/data', {headers: authHeaders()});
+      }
+    }
     if(!res.ok) throw new Error('bad response: '+res.status);
     const json = await res.json();
     data = json ? migrate(json) : defaultData();
@@ -322,7 +334,7 @@ async function saveData(){
     return;
   }
   try{
-    const res = await fetch('/api/data', {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)});
+    const res = await fetch('/api/data', {method:'PUT', headers: authHeaders({'Content-Type':'application/json'}), body: JSON.stringify(data)});
     if(!res.ok) throw new Error('save failed: '+res.status);
     const warn = document.getElementById('conn-warning');
     if(warn) warn.style.display = 'none';
