@@ -151,9 +151,7 @@ tr:last-child td{border-bottom:none;}
 </head>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <body>
-<div id="conn-warning" style="display:none; background:#3A1F1F; border:1px solid var(--red); color:#F2A9A0; font-size:12px; padding:10px 16px; text-align:center;">
-  ⚠️ Can't reach the server right now — changes won't save until this is back. Your data is safe, this page just isn't connected.
-</div>
+<div id="conn-warning" style="display:none; background:#3A1F1F; border:1px solid var(--red); color:#F2A9A0; font-size:12px; padding:10px 16px; text-align:center;">⚠️ Can't reach the server right now — changes won't save until it's back.</div>
 <div class="wrap" id="app">
   <div class="loading">Booting up the dashboard…</div>
 </div>
@@ -300,18 +298,15 @@ function applyBulkBatches(parsed){
   return parsed;
 }
 
+let loadOk = false; // never save over the DB if the initial load failed
 async function loadData(){
   try{
     const res = await fetch('/api/data');
     if(!res.ok) throw new Error('bad response: '+res.status);
     const json = await res.json();
-    if(json){
-      data = migrate(json);
-      await saveData();
-    } else {
-      data = defaultData();
-      await saveData();
-    }
+    data = json ? migrate(json) : defaultData();
+    loadOk = true;
+    await saveData();
   }catch(e){
     console.error('load failed', e);
     data = defaultData();
@@ -322,12 +317,12 @@ async function loadData(){
 }
 
 async function saveData(){
+  if(!loadOk){
+    const w=document.getElementById('conn-warning'); if(w) w.style.display='block';
+    return;
+  }
   try{
-    const res = await fetch('/api/data', {
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(data)
-    });
+    const res = await fetch('/api/data', {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)});
     if(!res.ok) throw new Error('save failed: '+res.status);
     const warn = document.getElementById('conn-warning');
     if(warn) warn.style.display = 'none';
