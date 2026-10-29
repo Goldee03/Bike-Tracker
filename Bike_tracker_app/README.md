@@ -1,51 +1,24 @@
-# Bike Tracker — Application Code
+# Bike Log
 
-Application layer only: Express API + Postgres schema + frontend
-dashboard. Docker, docker-compose, Nginx, TLS, and cloud provisioning
-(Terraform) are owned separately as the infra layer.
+Mileage, fuel, service and expense tracker.
+Frontend: static page in `public/`. Backend: Vercel serverless functions in `api/`. Database: Supabase Postgres.
 
-## What's in this repo
+## Layout
+- `public/index.html` - the whole UI
+- `api/data.js` - GET/PUT the app data (single JSONB row)
+- `api/health.js` - health check
+- `api/_db.js` - DB pool + password check
+- `db/schema.sql` - table + starting data (run once in Supabase)
 
-```
-public/index.html    ← frontend (dashboard, charts, all UI logic)
-server/index.js       ← Express API (GET/PUT /api/data)
-server/schema.sql      ← Postgres table + seed data
-server/package.json    ← backend dependencies
-.env.example            ← required environment variables
-```
+## Deploy
+1. **Supabase**: SQL Editor -> paste and run `db/schema.sql`.
+2. **Vercel**: import this repo, set **Root Directory** to `Bike_tracker_app`, framework preset **Other**.
+3. **Environment variables** (Vercel -> Settings -> Environment Variables, Production):
+   - `DATABASE_URL` - Supabase connection string (see `.env.example`). Optional if the Supabase integration already added `POSTGRES_URL`.
+   - `APP_PASSWORD` - the password the site asks for.
+4. Redeploy (env vars only apply to new deployments).
+5. Open the site, enter the password. Check `/api/health` returns `{"ok":true}`.
 
-## Environment variables
-
-| Variable | Purpose |
-|---|---|
-| `DATABASE_URL` | Postgres connection string |
-| `DATABASE_SSL` | `true` for managed cloud DBs (e.g. RDS), `false` for native Postgres |
-| `PORT` | Express server port (defaults to 3000) |
-
-## Database setup
-
-```bash
-psql -h <host> -U <user> -d <dbname> -f server/schema.sql
-```
-
-Note: on first load, the app also merges in a small set of additional
-verified ride/fuel entries (14–21 Aug) via an additive-only migration in
-the frontend code — it never overwrites existing data, only fills gaps.
-This runs automatically regardless of backend, so nothing extra is
-needed in the schema for it.
-
-## API surface
-
-- `GET /api/health` — `{status:'ok'}` if DB reachable
-- `GET /api/data` — full tracker data blob
-- `PUT /api/data` — replaces it
-
-## Local run (no Docker)
-
-```bash
-cd server
-npm install
-DATABASE_URL="postgres://user:pass@localhost:5432/dbname" node index.js
-```
-
-Visit `http://localhost:3000`.
+## Notes
+- The browser stores the password in localStorage after the first successful entry.
+- Export a JSON backup from the Backup tab regularly.
