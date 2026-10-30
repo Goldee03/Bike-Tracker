@@ -8,7 +8,7 @@ Frontend: static page in `public/`. Backend: Vercel serverless functions in `api
 - `api/data.js` - GET/PUT the app data (single JSONB row)
 - `api/health.js` - health check
 - `api/_db.js` - DB pool + password check
-- `db/schema.sql` - table + starting data (run once in Supabase)
+- `db/schema.sql` - creates the table (run once in Supabase). No personal data is stored in the repo; records live only in the database.
 
 ## Deploy
 1. **Supabase**: SQL Editor -> paste and run `db/schema.sql`.
