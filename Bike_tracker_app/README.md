@@ -29,7 +29,7 @@ The application is a static site hosted on Vercel. It uses Supabase Authenticati
 
 ## Legacy data
 
-The old shared `public.app_data` table is not used by the current application. It may be retained temporarily as an independent historical copy; do not expose it through public access policies. The current application does not automatically read or migrate data from that table. The one-time owner migration script has been removed because the owner account is already working with its own data.
+The old shared `public.app_data` table is not used by the current application. It may be retained temporarily as an independent historical copy; do not expose it through public access policies. The current application does not automatically read or migrate data from that table.
 
 ## Security
 
