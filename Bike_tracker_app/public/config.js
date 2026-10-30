@@ -3,5 +3,5 @@
 // Row Level Security in the database. Never put the secret/service_role key here.
 window.APP_CONFIG = {
   SUPABASE_URL: 'https://bfquxmfydqocohyqhwnb.supabase.co',
-  SUPABASE_KEY: 'PASTE_YOUR_PUBLISHABLE_KEY_HERE'
+  SUPABASE_KEY: 'sb_publishable_DFGJFXmKnaIXZIUistAFFg_dsQZfDtV'
 };
