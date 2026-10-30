@@ -150,6 +150,8 @@ tr:last-child td{border-bottom:none;}
 </style>
 </head>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="/config.js"></script>
 <body>
 <div id="conn-warning" style="display:none; background:#3A1F1F; border:1px solid var(--red); color:#F2A9A0; font-size:12px; padding:10px 16px; text-align:center;">⚠️ Can't reach the server right now — changes won't save until it's back.</div>
 <div class="wrap" id="app">
@@ -215,50 +217,107 @@ function migrate(parsed){
 }
 
 let loadOk = false; // never save over the DB if the initial load failed
-function authHeaders(extra){
-  const h = Object.assign({}, extra||{});
-  try{ const pw = localStorage.getItem('bt_pw'); if(pw) h['X-App-Password'] = pw; }catch(e){}
-  return h;
-}
+let sb = null;        // Supabase client
+let currentUser = null;
+
+function showWarn(on){ const w=document.getElementById('conn-warning'); if(w) w.style.display = on?'block':'none'; }
+
 async function loadData(){
+  loadOk = false;
   try{
-    let res = await fetch('/api/data', {headers: authHeaders()});
-    if(res.status === 401){
-      const pw = prompt('Enter app password');
-      if(pw){
-        try{ localStorage.setItem('bt_pw', pw); }catch(e){}
-        res = await fetch('/api/data', {headers: authHeaders()});
-      }
-    }
-    if(!res.ok) throw new Error('bad response: '+res.status);
-    const json = await res.json();
-    data = json ? migrate(json) : defaultData();
+    const { data: row, error } = await sb.from('user_data').select('data').eq('user_id', currentUser.id).maybeSingle();
+    if(error) throw error;
+    data = row && row.data ? migrate(row.data) : defaultData();
     loadOk = true;
+    showWarn(false);
     await saveData();
   }catch(e){
     console.error('load failed', e);
     data = defaultData();
-    const warn = document.getElementById('conn-warning');
-    if(warn) warn.style.display = 'block';
+    showWarn(true);
   }
   render();
 }
 
 async function saveData(){
-  if(!loadOk){
-    const w=document.getElementById('conn-warning'); if(w) w.style.display='block';
-    return;
-  }
+  if(!loadOk){ showWarn(true); return; }
   try{
-    const res = await fetch('/api/data', {method:'PUT', headers: authHeaders({'Content-Type':'application/json'}), body: JSON.stringify(data)});
-    if(!res.ok) throw new Error('save failed: '+res.status);
-    const warn = document.getElementById('conn-warning');
-    if(warn) warn.style.display = 'none';
+    const { error } = await sb.from('user_data').upsert({ user_id: currentUser.id, data: data, updated_at: new Date().toISOString() });
+    if(error) throw error;
+    showWarn(false);
   }catch(e){
     console.error('save failed', e);
-    const warn = document.getElementById('conn-warning');
-    if(warn) warn.style.display = 'block';
+    showWarn(true);
   }
+}
+
+// ---------- Authentication ----------
+function authMsg(text, isErr){
+  const el = document.getElementById('auth-msg'); if(!el) return;
+  el.textContent = text||''; el.style.color = isErr ? '#F2A9A0' : 'var(--green, #6FCF97)';
+}
+function showLogin(mode){
+  mode = mode || 'signin';
+  const isUp = mode==='signup';
+  document.getElementById('app').innerHTML = `
+    <header><h1>🏍️ Bike Log</h1><p>${isUp?'Create your account':'Sign in to your bike log'}</p></header>
+    <div class="panel" style="max-width:380px; margin:20px auto;">
+      <div class="field full" style="margin-bottom:10px;"><label>Email</label><input id="auth-email" type="email" autocomplete="email"></div>
+      <div class="field full" style="margin-bottom:12px;"><label>Password</label><input id="auth-pass" type="password" autocomplete="${isUp?'new-password':'current-password'}" placeholder="${isUp?'At least 8 characters':''}"></div>
+      <button class="btn" id="auth-go" onclick="${isUp?'doSignUp()':'doSignIn()'}">${isUp?'Create account':'Sign in'}</button>
+      <div id="auth-msg" style="font-size:12px; margin-top:10px; min-height:16px;"></div>
+      <div style="display:flex; justify-content:space-between; margin-top:12px; font-size:12px;">
+        <a href="#" style="color:var(--amber);" onclick="showLogin('${isUp?'signin':'signup'}');return false;">${isUp?'Have an account? Sign in':'New here? Create account'}</a>
+        ${isUp?'':'<a href="#" style="color:var(--muted);" onclick="doReset();return false;">Forgot password?</a>'}
+      </div>
+    </div>`;
+  const pw=document.getElementById('auth-pass');
+  pw.addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('auth-go').click(); });
+}
+function authVals(){ return { email: document.getElementById('auth-email').value.trim(), password: document.getElementById('auth-pass').value }; }
+async function doSignIn(){
+  const {email,password} = authVals();
+  if(!email||!password){ authMsg('Enter email and password.', true); return; }
+  authMsg('Signing in…');
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if(error) authMsg(/confirm/i.test(error.message) ? 'Please confirm your email first — check your inbox.' : 'Wrong email or password.', true);
+}
+async function doSignUp(){
+  const {email,password} = authVals();
+  if(!email||password.length<8){ authMsg('Enter an email and a password of 8+ characters.', true); return; }
+  authMsg('Creating account…');
+  const { data: res, error } = await sb.auth.signUp({ email, password, options:{ emailRedirectTo: window.location.origin } });
+  if(error){ authMsg(error.message, true); return; }
+  if(res.session) return; // confirmation disabled: signed in already
+  authMsg('Almost done — we sent a confirmation link to your email. Open it, then sign in.');
+}
+async function doReset(){
+  const {email} = authVals();
+  if(!email){ authMsg('Type your email above first.', true); return; }
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+  authMsg(error ? error.message : 'Password reset link sent — check your email.', !!error);
+}
+async function doSignOut(){
+  await sb.auth.signOut();
+}
+
+function startApp(){
+  const cfg = window.APP_CONFIG || {};
+  if(!window.supabase || !cfg.SUPABASE_URL || !cfg.SUPABASE_KEY || cfg.SUPABASE_KEY.startsWith('PASTE_')){
+    document.getElementById('app').innerHTML = '<div class="loading">App is not configured: set SUPABASE_KEY in public/config.js</div>';
+    return;
+  }
+  sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_KEY);
+  let lastUid = undefined;
+  sb.auth.onAuthStateChange((event, session) => {
+    const uid = session && session.user ? session.user.id : null;
+    if(uid === lastUid && event !== 'SIGNED_OUT') return; // ignore token refreshes
+    lastUid = uid;
+    if(!uid){ currentUser = null; data = null; loadOk = false; showWarn(false); showLogin('signin'); return; }
+    currentUser = session.user;
+    document.getElementById('app').innerHTML = '<div class="loading">Booting up the dashboard…</div>';
+    setTimeout(loadData, 0); // don't call Supabase inside the auth callback
+  });
 }
 
 function sortedDates(){
@@ -470,6 +529,7 @@ function render(){
     <header>
       <h1>🏍️ Bike Log</h1>
       <p>Your bike, logged honestly — mileage and money, long term.</p>
+      <p style="margin-top:6px;"><span style="color:var(--muted);font-size:12px;">${currentUser?currentUser.email:''}</span> · <a href="#" style="color:var(--amber);font-size:12px;" onclick="doSignOut();return false;">Sign out</a></p>
     </header>
 
     <div class="cluster">
@@ -1288,7 +1348,7 @@ async function restoreJSON(){
   }
 }
 
-loadData();
+startApp();
 </script>
 </body>
 </html>

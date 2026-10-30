@@ -1,24 +1,21 @@
 # Bike Log
 
-Mileage, fuel, service and expense tracker.
-Frontend: static page in `public/`. Backend: Vercel serverless functions in `api/`. Database: Supabase Postgres.
+Mileage, fuel, service and expense tracker with per-user accounts.
+Static site on Vercel (`public/`) talking directly to Supabase (Auth + Postgres with Row Level Security). No server code.
 
 ## Layout
-- `public/index.html` - the whole UI
-- `api/data.js` - GET/PUT the app data (single JSONB row)
-- `api/health.js` - health check
-- `api/_db.js` - DB pool + password check
-- `db/schema.sql` - creates the table (run once in Supabase). No personal data is stored in the repo; records live only in the database.
+- `public/index.html` - the whole app (login screen + dashboard)
+- `public/config.js` - Supabase project URL + publishable key (public by design)
+- `db/phase2_auth.sql` - per-user table + RLS policies (run once)
+- `db/phase2_migrate_my_data.sql` - moves the original shared data into your account (run once)
 
-## Deploy
-1. **Supabase**: SQL Editor -> paste and run `db/schema.sql`.
-2. **Vercel**: import this repo, set **Root Directory** to `Bike_tracker_app`, framework preset **Other**.
-3. **Environment variables** (Vercel -> Settings -> Environment Variables, Production):
-   - `DATABASE_URL` - Supabase connection string (see `.env.example`). Optional if the Supabase integration already added `POSTGRES_URL`.
-   - `APP_PASSWORD` - the password the site asks for.
-4. Redeploy (env vars only apply to new deployments).
-5. Open the site, enter the password. Check `/api/health` returns `{"ok":true}`.
+## Setup
+1. Supabase -> Authentication -> Providers -> Email: enable, and turn **Confirm email** on.
+2. Supabase -> Authentication -> URL Configuration: set Site URL to your Vercel URL and add it to Redirect URLs.
+3. Supabase -> SQL Editor: run `db/phase2_auth.sql`.
+4. Put the publishable key in `public/config.js`.
+5. Deploy on Vercel (Root Directory `Bike_tracker_app`). No environment variables are needed.
+6. Sign up in the app, confirm the email, then run `db/phase2_migrate_my_data.sql` with your email.
 
-## Notes
-- The browser stores the password in localStorage after the first successful entry.
-- Export a JSON backup from the Backup tab regularly.
+## Security
+Every row in `user_data` is tied to `auth.uid()`; policies let a user read/write only their own row. Never put the secret or service_role key in the frontend.
