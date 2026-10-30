@@ -1,31 +1,37 @@
 # Bike Log
 
-Mileage, fuel, service and expense tracker with per-user accounts.
-Static site on Vercel (`public/`) talking directly to Supabase (Auth + Postgres with Row Level Security). No server code.
+A mileage, fuel, service and expense tracker with individual user accounts.
 
-## Layout
-- `public/index.html` - the whole app (login screen + dashboard)
-- `public/config.js` - Supabase project URL + public publishable key
-- `db/phase2_auth.sql` - per-user table + RLS policies (run once)
-- `db/phase2_migrate_my_data.sql` - one-time copy of the old shared data into the designated owner account
+The application is a static site hosted on Vercel. It uses Supabase Authentication for sign-in and the Supabase `user_data` table for each user's records. Row Level Security (RLS) ensures users can access only their own data.
+
+## Project layout
+
+- `public/index.html` - application UI, authentication and dashboard
+- `public/config.js` - Supabase project URL and public publishable key
+- `db/phase2_auth.sql` - creates the per-user data table and its RLS policies; run once when setting up the database
+- `db/schema.sql` - legacy schema for the retired shared `app_data` table; not used by the current application
 
 ## Setup
-1. Supabase -> Authentication -> Providers -> Email: enable, and turn **Confirm email** on.
-2. Supabase -> Authentication -> URL Configuration: set Site URL to the production Vercel URL and add it to Redirect URLs.
-3. Back up the existing data. Keep an exported JSON backup outside the repository.
-4. Supabase -> SQL Editor: run `db/phase2_auth.sql` once.
-5. Put the Supabase publishable key in `public/config.js`. Never use the secret/service_role key.
-6. Deploy on Vercel (Root Directory `Bike_tracker_app`). No server-side environment variables are needed for this static Supabase client setup.
-7. Open the app and submit the sign-up form using the email that should own the existing bike history. With **Confirm email** enabled, Supabase creates the Auth user but does not create an authenticated session yet.
-8. **Before clicking the email confirmation link and before signing in for the first time**, run `db/phase2_migrate_my_data.sql` in Supabase SQL Editor after replacing `YOUR_EMAIL_HERE` with the exact owner signup email. This copies the old `app_data` record into that one user's `user_data` row.
-9. After the migration succeeds, click the email confirmation link and sign in. The dashboard should load the migrated history.
-10. Create a second test account. It should start with empty data and must not be able to read or change the first user's records.
 
-## Important: one-time owner data migration
-- The migration script is a manual, one-time copy for the designated owner email only. It does not run when someone registers and is not run by Vercel.
-- Run it only once, before the owner account's first authenticated dashboard load. The script uses `ON CONFLICT (user_id) DO NOTHING` so it will not overwrite an existing user row if run again.
-- New users do not receive the old shared data. Their first authenticated load starts with an empty dataset and creates only their own row.
-- Keep the old `app_data` table and the JSON backup until the owner has verified all history in the new account. Do not drop the old table as part of Phase 2.
+1. In Supabase Authentication -> Providers -> Email, enable email sign-up and configure email confirmation as required.
+2. In Supabase Authentication -> URL Configuration, set the Site URL to the production Vercel URL and add the required Redirect URLs.
+3. In Supabase SQL Editor, run `db/phase2_auth.sql` once. The current production database has already had this setup applied.
+4. Set the Supabase project URL and public publishable key in `public/config.js`. Never put a secret or service-role key in frontend code.
+5. Deploy on Vercel with the Root Directory set to `Bike_tracker_app`. The current frontend talks directly to Supabase, so the retired API's database connection and app-password environment variables are not required.
+
+## User data and backups
+
+- Each authenticated user has a separate row in `public.user_data`, keyed by their Supabase Auth user ID.
+- New accounts start with an empty dataset.
+- The application loads and saves only the signed-in user's row.
+- RLS policies enforce per-user access in the database; frontend filtering alone is not the security boundary.
+- Use the application's **Backup** tab to download a JSON backup or restore a backup into the currently signed-in account.
+- Keep backups in a secure location outside the repository. A restore replaces the data for the account currently signed in.
+
+## Legacy data
+
+The old shared `public.app_data` table is not used by the current application. It may be retained temporarily as an independent historical copy; do not expose it through public access policies. The current application does not automatically read or migrate data from that table.
 
 ## Security
-Every row in `user_data` is tied to `auth.uid()`; policies let a user read/write only their own row. The publishable key is intended for frontend use; Row Level Security enforces data access. Never put the secret/service_role key in the frontend or GitHub.
+
+The frontend uses only the Supabase publishable key. Access to `user_data` is controlled by RLS policies that compare each row's `user_id` with `auth.uid()`. Never commit a Supabase secret or service-role key to GitHub or place one in frontend code.
