@@ -1,4 +1,5 @@
--- Phase 2: per-user data with Row Level Security. Run once in Supabase SQL Editor.
+-- Create per-user data storage and enforce per-user access with Row Level Security.
+-- Run once when setting up this schema in a new Supabase project.
 
 create table if not exists public.user_data (
   user_id    uuid primary key references auth.users(id) on delete cascade,
@@ -17,7 +18,3 @@ create policy "own row: select" on public.user_data for select to authenticated 
 create policy "own row: insert" on public.user_data for insert to authenticated with check (user_id = (select auth.uid()));
 create policy "own row: update" on public.user_data for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
 create policy "own row: delete" on public.user_data for delete to authenticated using (user_id = (select auth.uid()));
-
--- Lock down the old shared table so nobody can read it through the public API.
--- (It stays in the database as a backup of your original data.)
-alter table public.app_data enable row level security;
