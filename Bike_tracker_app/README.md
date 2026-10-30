@@ -8,14 +8,13 @@ The application is a static site hosted on Vercel. It uses Supabase Authenticati
 
 - `public/index.html` - application UI, authentication and dashboard
 - `public/config.js` - Supabase project URL and public publishable key
-- `db/phase2_auth.sql` - creates the per-user data table and its RLS policies; run once when setting up the database
-- `db/schema.sql` - legacy schema for the retired shared `app_data` table; not used by the current application
+- `db/phase2_auth.sql` - creates the per-user data table and its RLS policies; retained as the database setup reference
 
 ## Setup
 
 1. In Supabase Authentication -> Providers -> Email, enable email sign-up and configure email confirmation as required.
 2. In Supabase Authentication -> URL Configuration, set the Site URL to the production Vercel URL and add the required Redirect URLs.
-3. In Supabase SQL Editor, run `db/phase2_auth.sql` once. The current production database has already had this setup applied.
+3. In Supabase SQL Editor, run `db/phase2_auth.sql` only when setting up this schema in a new or reset project. It has already been applied to the current production database; do not rerun it without reviewing its statements first.
 4. Set the Supabase project URL and public publishable key in `public/config.js`. Never put a secret or service-role key in frontend code.
 5. Deploy on Vercel with the Root Directory set to `Bike_tracker_app`. The current frontend talks directly to Supabase, so the retired API's database connection and app-password environment variables are not required.
 
@@ -30,7 +29,7 @@ The application is a static site hosted on Vercel. It uses Supabase Authenticati
 
 ## Legacy data
 
-The old shared `public.app_data` table is not used by the current application. It may be retained temporarily as an independent historical copy; do not expose it through public access policies. The current application does not automatically read or migrate data from that table.
+The old shared `public.app_data` table is not used by the current application. It may be retained temporarily as an independent historical copy; do not expose it through public access policies. The current application does not automatically read or migrate data from that table. The one-time owner migration script has been removed because the owner account is already working with its own data.
 
 ## Security
 
