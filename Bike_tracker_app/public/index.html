@@ -189,6 +189,26 @@ a.tab{text-decoration:none; display:inline-block; white-space:nowrap;}
 .auth-foot{color:var(--muted); font-size:12px; margin-top:16px; line-height:1.45;}
 @media (max-width:859px){ .auth-card{order:-1;} .auth-shell{min-height:0; padding-top:6px;} }
 @media (prefers-reduced-motion: reduce){ .reel .strip{transition:none;} }
+
+/* ---- login background: night ride ---- */
+.auth-bg{position:fixed; inset:0; z-index:-1; overflow:hidden; background:linear-gradient(#07090b 0%, #101316 50%, #07090b 100%);}
+.auth-bg .glow{position:absolute; left:50%; top:44%; width:120vmax; height:46vmax; transform:translate(-50%,-50%); background:radial-gradient(ellipse at center, rgba(242,169,60,.30), rgba(242,169,60,.06) 45%, transparent 68%);}
+.auth-bg .hills{position:absolute; left:0; right:0; top:calc(44% - 70px); width:100%; height:80px; display:block;}
+.auth-bg .road-wrap{position:absolute; left:0; right:0; top:44%; bottom:0; perspective:360px; perspective-origin:50% 0%; overflow:hidden;}
+.auth-bg .road{position:absolute; left:50%; top:0; width:260%; height:240%; transform:translateX(-50%) rotateX(74deg); transform-origin:50% 0; background:#0c0e11;}
+.auth-bg .road::before{content:''; position:absolute; left:calc(50% - 7px); top:0; bottom:0; width:14px;
+  background:linear-gradient(to bottom, #F2A93C 0 55%, transparent 55%); background-size:14px 220px; animation:roadrun 0.9s linear infinite;}
+.auth-bg .road::after{content:''; position:absolute; inset:0;
+  background:linear-gradient(90deg, transparent calc(50% - 15%), rgba(237,237,237,.55) calc(50% - 15%) calc(50% - 15% + 10px), transparent calc(50% - 15% + 10px) calc(50% + 15% - 10px), rgba(237,237,237,.55) calc(50% + 15% - 10px) calc(50% + 15%), transparent calc(50% + 15%));}
+.auth-bg .fade{position:absolute; left:0; right:0; top:44%; height:34%; background:linear-gradient(#101316, transparent);}
+.auth-bg .beam{position:absolute; left:50%; top:44%; bottom:0; width:100vw; transform:translateX(-50%); background:linear-gradient(to bottom, rgba(242,169,60,.0), rgba(255,222,160,.14)); clip-path:polygon(49.5% 0, 50.5% 0, 78% 100%, 22% 100%);}
+.auth-bg .streaks span{position:absolute; top:44%; width:2px; height:26vh; background:linear-gradient(to bottom, transparent, rgba(255,214,140,.55), transparent); opacity:0; animation:streak 1.6s ease-in infinite;}
+.auth-bg video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.55;}
+.auth-bg .shade{position:absolute; inset:0; background:radial-gradient(ellipse at 30% 40%, rgba(10,12,14,.55), rgba(10,12,14,.82) 70%);}
+@keyframes roadrun{ from{background-position:0 0;} to{background-position:0 220px;} }
+@keyframes streak{ 0%{transform:translateY(0) scaleY(.4); opacity:0;} 15%{opacity:.8;} 100%{transform:translateY(60vh) scaleY(1.6); opacity:0;} }
+.auth-card{background:rgba(28,32,36,.78); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);}
+@media (prefers-reduced-motion: reduce){ .auth-bg .road::before, .auth-bg .streaks span{animation:none;} }
 </style>
 </head>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -324,7 +344,7 @@ window.addEventListener('popstate', () => {
 
 // ---------- Session timeout ----------
 // Signed out after this many hours without using the app. Change here.
-const IDLE_LIMIT_HOURS = 16;
+const IDLE_LIMIT_HOURS = 2;
 const ACTIVE_KEY = 'bt_last_active';
 function getActive(){ try{ return Number(localStorage.getItem(ACTIVE_KEY))||0; }catch(e){ return 0; } }
 function touchActive(){ try{ localStorage.setItem(ACTIVE_KEY, String(Date.now())); }catch(e){} }
@@ -364,6 +384,15 @@ function rollReels(){
     st.style.transform = 'translateY(' + (-54*Number(target[i])) + 'px)';
   });
 }
+function loginBgHTML(){
+  const cfg = window.APP_CONFIG || {};
+  const vid = cfg.LOGIN_VIDEO ? '<video autoplay muted loop playsinline src="'+cfg.LOGIN_VIDEO+'" onerror="this.remove()"></video>' : '';
+  const streaks = [12,24,33,41,59,67,76,88].map((x,i)=>'<span style="left:'+x+'%;animation-delay:'+(i*0.37).toFixed(2)+'s"></span>').join('');
+  return '<div class="auth-bg" aria-hidden="true">'+vid+'<div class="glow"></div>'+
+    '<svg class="hills" viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0 80 L0 48 L90 30 L180 46 L300 22 L420 44 L520 28 L640 50 L760 26 L880 46 L1000 24 L1100 42 L1200 30 L1200 80Z" fill="#0b0d0f"/></svg>'+
+    '<div class="road-wrap"><div class="road"></div></div><div class="fade"></div><div class="beam"></div>'+
+    '<div class="streaks">'+streaks+'</div><div class="shade"></div></div>';
+}
 function showLogin(mode){
   authMode = mode || 'signin';
   const isUp = authMode==='signup';
@@ -372,7 +401,7 @@ function showLogin(mode){
   document.title = (isUp?'Create account':'Sign in') + ' · Bike Log';
   let notice=''; try{ notice = sessionStorage.getItem('bt_notice')||''; sessionStorage.removeItem('bt_notice'); }catch(e){}
   const reels = [0,1,2,3,4].map(()=>'<div class="reel"><div class="strip">'+[0,1,2,3,4,5,6,7,8,9].map(n=>'<span>'+n+'</span>').join('')+'</div></div>').join('');
-  app.innerHTML = `
+  app.innerHTML = loginBgHTML() + `
     <div class="auth-shell">
       <section class="auth-hero" aria-label="About Bike Log">
         <div class="auth-brand">🏍️ Bike Log</div>
