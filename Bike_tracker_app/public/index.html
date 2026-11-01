@@ -209,6 +209,12 @@ a.tab{text-decoration:none; display:inline-block; white-space:nowrap;}
 @keyframes streak{ 0%{transform:translateY(0) scaleY(.4); opacity:0;} 15%{opacity:.8;} 100%{transform:translateY(60vh) scaleY(1.6); opacity:0;} }
 .auth-card{background:rgba(28,32,36,.78); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);}
 @media (prefers-reduced-motion: reduce){ .auth-bg .road::before, .auth-bg .streaks span{animation:none;} }
+
+/* ---- date picker icon visible on dark theme ---- */
+:root{color-scheme:dark;}
+input[type="date"]{color-scheme:dark; min-height:40px; cursor:pointer;}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) brightness(1.2); opacity:.85; cursor:pointer; padding:4px; margin-left:4px;}
+input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1;}
 </style>
 </head>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -290,6 +296,7 @@ async function loadData(){
     const { data: row, error } = await sb.from('user_data').select('data').eq('user_id', currentUser.id).maybeSingle();
     if(error) throw error;
     data = row && row.data ? migrate(row.data) : defaultData();
+    logFormDate = nextLogDate(); logNotice = '';
     loadOk = true;
     showWarn(false);
     await saveData();
@@ -984,6 +991,20 @@ function renderSpendingCharts(){
 
 // ---- Log Ride ----
 let logFormDate = todayISO();
+let logNotice = '';
+function addDaysISO(iso, n){
+  const d = new Date(iso+'T00:00:00Z'); d.setUTCDate(d.getUTCDate()+n);
+  return d.toISOString().slice(0,10);
+}
+// Which date the Log Ride form should open on: the day after the latest
+// fully logged day, or the latest day itself if its evening reading is missing.
+function nextLogDate(){
+  const dates = sortedDates();
+  if(!dates.length) return todayISO();
+  const last = dates[dates.length-1];
+  const e = data.entries[last] || {};
+  return (e.evening==null) ? last : addDaysISO(last, 1);
+}
 
 function logTabHTML(){
   const iso = logFormDate;
@@ -991,6 +1012,7 @@ function logTabHTML(){
   return `
     <div class="panel">
       <h2>📝 ${data.entries[iso] ? 'Edit Ride' : 'Log a Ride'}</h2>
+      ${logNotice ? `<div class="hint" style="color:var(--green); margin:-4px 0 12px;">${logNotice}</div>` : ''}
       <div class="field full">
         <label>Date</label>
         <input type="date" id="log-date" value="${iso}" onchange="changeLogDate(this.value)">
@@ -1020,12 +1042,12 @@ function logTabHTML(){
 }
 
 function changeLogDate(v){
-  logFormDate = v;
+  logFormDate = v; logNotice = '';
   renderTab();
 }
 
 function editRide(dateStr){
-  logFormDate = dateStr;
+  logFormDate = dateStr; logNotice = '';
   activeTab = 'log';
   renderTab();
   const el = document.getElementById('log-morning');
@@ -1063,11 +1085,26 @@ async function submitLog(){
   const evening = document.getElementById('log-evening').value;
   if(!iso){ alert('Pick a date'); return; }
   const note = document.getElementById('log-note').value;
+  const existed = !!data.entries[iso];
   data.entries[iso] = {
     morning: morning!=='' ? Number(morning) : (data.entries[iso]?.morning ?? null),
     evening: evening!=='' ? Number(evening) : (data.entries[iso]?.evening ?? null),
     note: note || undefined
   };
+  const saved = data.entries[iso];
+  if(saved.evening==null){
+    // Day not finished yet: stay on it so the evening reading can be added later.
+    logFormDate = iso;
+    logNotice = 'Saved the morning reading for ' + dLabel(iso) + '. Add the evening reading when you are back.';
+  } else if(existed){
+    logFormDate = nextLogDate();
+    logNotice = 'Updated ' + dLabel(iso) + '. Now on ' + dLabel(logFormDate) + '.';
+  } else {
+    let n = addDaysISO(iso, 1), guard = 0;
+    while(data.entries[n] && data.entries[n].evening!=null && guard++ < 400) n = addDaysISO(n, 1);
+    logFormDate = n;
+    logNotice = 'Saved ' + dLabel(iso) + '. Now on ' + dLabel(n) + '.';
+  }
   await saveData();
   render();
   activeTab='log'; renderTab();
@@ -1559,6 +1596,12 @@ async function restoreJSON(){
   }
 }
 
+document.addEventListener('click', e => {
+  const t = e.target;
+  if(t && t.matches && t.matches('input[type="date"]') && typeof t.showPicker === 'function'){
+    try{ t.showPicker(); }catch(err){}
+  }
+});
 startApp();
 </script>
 </body>
