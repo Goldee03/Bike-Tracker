@@ -14,7 +14,7 @@ The application is a static site hosted on Vercel. It uses Supabase Authenticati
 `/login`, `/dashboard`, `/logride`, `/fuellog` (also `/fuelog`), `/service`, `/expenses`, `/spending`, `/mileage`, `/backup`. `vercel.json` sends every non-file path to `index.html`; the app reads the path to pick the page.
 
 ## Sessions
-Users are signed out after `IDLE_LIMIT_HOURS` (default 16, set near the top of the auth code in `public/index.html`) without using the app. This is enforced in the browser. For server-side enforcement, Supabase Pro has Auth -> Sessions -> inactivity timeout.
+Users are signed out after `IDLE_LIMIT_HOURS` (default 2, set near the top of the auth code in `public/index.html`) without using the app. This is enforced in the browser. For server-side enforcement, Supabase Pro has Auth -> Sessions -> inactivity timeout.
 
 ## Setup
 
