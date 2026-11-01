@@ -147,6 +147,48 @@ tr:last-child td{border-bottom:none;}
 .chart-box{position:relative; height:200px; margin-top:6px;}
 .chart-box.tall{height:240px;}
 .legend-note{font-size:11px; color:var(--muted); text-align:center; margin-top:6px;}
+
+/* ---- tabs as links ---- */
+a.tab{text-decoration:none; display:inline-block; white-space:nowrap;}
+.wrap.auth{max-width:1040px;}
+
+/* ---- login page ---- */
+.auth-shell{display:grid; gap:28px; align-items:center; min-height:calc(100vh - 120px);}
+@media(min-width:860px){ .auth-shell{grid-template-columns:1.1fr 0.9fr; gap:56px;} }
+.auth-brand{display:flex; align-items:center; gap:8px; font-weight:700; font-size:16px; letter-spacing:-0.01em; margin-bottom:22px;}
+.auth-hero h1{font-size:clamp(30px,5vw,46px); line-height:1.08; letter-spacing:-0.03em; font-weight:700; max-width:14ch;}
+.auth-hero .lede{color:var(--muted); font-size:15px; line-height:1.55; margin-top:14px; max-width:46ch;}
+.reel-box{margin:26px 0 8px; display:inline-block; background:#0E1013; border:1px solid var(--border); border-radius:12px; padding:14px 16px 12px; box-shadow:0 0 24px rgba(242,169,60,0.10);}
+.reels{display:flex; gap:4px; align-items:center;}
+.reel{width:36px; height:54px; overflow:hidden; background:#090B0D; border:1px solid var(--border); border-radius:5px; box-shadow:inset 0 3px 6px rgba(0,0,0,.7); position:relative;}
+.reel::after{content:''; position:absolute; inset:0; background:linear-gradient(#000a 0%, transparent 28%, transparent 72%, #000a 100%); pointer-events:none;}
+.reel .strip{display:flex; flex-direction:column; transition:transform 1.9s cubic-bezier(.16,.84,.24,1);}
+.reel .strip span{height:54px; line-height:54px; text-align:center; font-family:'DM Mono',monospace; font-size:30px; font-weight:500; color:var(--amber); flex:none;}
+.reel-sep{color:var(--muted); font-family:'DM Mono',monospace; font-size:22px; padding:0 1px;}
+.reel-cap{color:var(--muted); font-size:12px; margin-top:8px;}
+.feat-list{list-style:none; margin-top:26px; display:grid; gap:14px;}
+.feat-list li{display:flex; gap:12px; align-items:flex-start;}
+.feat-ico{flex:none; width:36px; height:36px; border-radius:9px; background:var(--panel-raised); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:17px;}
+.feat-list b{display:block; font-size:14px; font-weight:600;}
+.feat-list span{display:block; color:var(--muted); font-size:13px; line-height:1.45; margin-top:1px;}
+.auth-card{background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:22px; box-shadow:0 18px 50px rgba(0,0,0,.35);}
+.auth-card h2{font-size:20px; letter-spacing:-0.02em; margin-bottom:4px;}
+.auth-card .sub{color:var(--muted); font-size:13px; margin-bottom:16px; line-height:1.45;}
+.seg{display:grid; grid-template-columns:1fr 1fr; background:#0E1013; border:1px solid var(--border); border-radius:10px; padding:3px; margin-bottom:18px;}
+.seg button{background:none; border:none; color:var(--muted); font:600 13px 'Inter',sans-serif; padding:9px; border-radius:7px; cursor:pointer;}
+.seg button.on{background:var(--amber); color:#14171A;}
+.seg button:focus-visible, .btn:focus-visible, .pw-toggle:focus-visible, .auth-card a:focus-visible{outline:2px solid var(--amber); outline-offset:2px;}
+.pw-wrap{position:relative; display:flex;}
+.pw-wrap input{flex:1; padding-right:64px;}
+.pw-toggle{position:absolute; right:6px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--muted); font:600 12px 'Inter',sans-serif; cursor:pointer; padding:6px 8px; border-radius:6px;}
+.auth-msg{font-size:13px; line-height:1.45; margin-top:12px; min-height:18px;}
+.auth-msg.err{color:#F2A9A0;} .auth-msg.ok{color:var(--green);}
+.auth-links{display:flex; justify-content:space-between; gap:10px; margin-top:14px; font-size:12px;}
+.auth-links a{color:var(--amber); text-decoration:none;} .auth-links a.mut{color:var(--muted);}
+.btn[disabled]{opacity:.6; cursor:progress;}
+.auth-foot{color:var(--muted); font-size:12px; margin-top:16px; line-height:1.45;}
+@media (max-width:859px){ .auth-card{order:-1;} .auth-shell{min-height:0; padding-top:6px;} }
+@media (prefers-reduced-motion: reduce){ .reel .strip{transition:none;} }
 </style>
 </head>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -251,53 +293,173 @@ async function saveData(){
   }
 }
 
+// ---------- Routes (one URL per feature) ----------
+const ROUTES = {
+  dashboard:'/dashboard', log:'/logride', refuel:'/fuellog', service:'/service',
+  expenses:'/expenses', spending:'/spending', mileage:'/mileage', export:'/backup'
+};
+const TITLES = {
+  dashboard:'Dashboard', log:'Log Ride', refuel:'Fuel Log', service:'Service',
+  expenses:'Expenses', spending:'Spending', mileage:'Mileage', export:'Backup'
+};
+function tabFromPath(path){
+  path = (path||'/').replace(/\/+$/,'') || '/';
+  if(path==='/fuelog') return 'refuel'; // alias
+  for(const k in ROUTES){ if(ROUTES[k]===path) return k; }
+  return 'dashboard';
+}
+function navTo(tab, ev){
+  if(ev && ev.preventDefault) ev.preventDefault();
+  activeTab = tab;
+  if(location.pathname !== ROUTES[tab]) history.pushState({}, '', ROUTES[tab]);
+  render();
+  window.scrollTo(0,0);
+  return false;
+}
+window.addEventListener('popstate', () => {
+  if(!currentUser || !data) return;
+  activeTab = tabFromPath(location.pathname);
+  render();
+});
+
+// ---------- Session timeout ----------
+// Signed out after this many hours without using the app. Change here.
+const IDLE_LIMIT_HOURS = 16;
+const ACTIVE_KEY = 'bt_last_active';
+function getActive(){ try{ return Number(localStorage.getItem(ACTIVE_KEY))||0; }catch(e){ return 0; } }
+function touchActive(){ try{ localStorage.setItem(ACTIVE_KEY, String(Date.now())); }catch(e){} }
+function clearActive(){ try{ localStorage.removeItem(ACTIVE_KEY); }catch(e){} }
+function sessionExpired(){
+  const t = getActive();
+  return !t || (Date.now() - t) > IDLE_LIMIT_HOURS*3600*1000;
+}
+let lastTouch = 0;
+function noteActivity(){
+  if(!currentUser) return;
+  const n = Date.now();
+  if(n - lastTouch > 30000){ lastTouch = n; touchActive(); }
+}
+async function expireSession(){
+  clearActive();
+  try{ sessionStorage.setItem('bt_notice', 'You were signed out after '+IDLE_LIMIT_HOURS+' hours of inactivity. Sign in again to continue.'); }catch(e){}
+  await sb.auth.signOut();
+}
+function checkIdle(){
+  if(currentUser && sessionExpired()) expireSession();
+}
+['pointerdown','keydown','touchstart'].forEach(ev => window.addEventListener(ev, noteActivity, {passive:true}));
+document.addEventListener('visibilitychange', () => { if(!document.hidden) checkIdle(); });
+setInterval(checkIdle, 60000);
+
 // ---------- Authentication ----------
-function authMsg(text, isErr){
+let authMode = 'signin';
+function authMsg(text, kind){
   const el = document.getElementById('auth-msg'); if(!el) return;
-  el.textContent = text||''; el.style.color = isErr ? '#F2A9A0' : 'var(--green, #6FCF97)';
+  el.textContent = text||''; el.className = 'auth-msg' + (kind?(' '+kind):'');
+}
+function rollReels(){
+  const target = '12840';
+  document.querySelectorAll('.reel .strip').forEach((st,i)=>{
+    st.style.transitionDelay = (i*0.14)+'s';
+    st.style.transform = 'translateY(' + (-54*Number(target[i])) + 'px)';
+  });
 }
 function showLogin(mode){
-  mode = mode || 'signin';
-  const isUp = mode==='signup';
-  document.getElementById('app').innerHTML = `
-    <header><h1>🏍️ Bike Log</h1><p>${isUp?'Create your account':'Sign in to your bike log'}</p></header>
-    <div class="panel" style="max-width:380px; margin:20px auto;">
-      <div class="field full" style="margin-bottom:10px;"><label>Email</label><input id="auth-email" type="email" autocomplete="email"></div>
-      <div class="field full" style="margin-bottom:12px;"><label>Password</label><input id="auth-pass" type="password" autocomplete="${isUp?'new-password':'current-password'}" placeholder="${isUp?'At least 8 characters':''}"></div>
-      <button class="btn" id="auth-go" onclick="${isUp?'doSignUp()':'doSignIn()'}">${isUp?'Create account':'Sign in'}</button>
-      <div id="auth-msg" style="font-size:12px; margin-top:10px; min-height:16px;"></div>
-      <div style="display:flex; justify-content:space-between; margin-top:12px; font-size:12px;">
-        <a href="#" style="color:var(--amber);" onclick="showLogin('${isUp?'signin':'signup'}');return false;">${isUp?'Have an account? Sign in':'New here? Create account'}</a>
-        ${isUp?'':'<a href="#" style="color:var(--muted);" onclick="doReset();return false;">Forgot password?</a>'}
-      </div>
+  authMode = mode || 'signin';
+  const isUp = authMode==='signup';
+  const app = document.getElementById('app');
+  app.className = 'wrap auth';
+  document.title = (isUp?'Create account':'Sign in') + ' · Bike Log';
+  let notice=''; try{ notice = sessionStorage.getItem('bt_notice')||''; sessionStorage.removeItem('bt_notice'); }catch(e){}
+  const reels = [0,1,2,3,4].map(()=>'<div class="reel"><div class="strip">'+[0,1,2,3,4,5,6,7,8,9].map(n=>'<span>'+n+'</span>').join('')+'</div></div>').join('');
+  app.innerHTML = `
+    <div class="auth-shell">
+      <section class="auth-hero" aria-label="About Bike Log">
+        <div class="auth-brand">🏍️ Bike Log</div>
+        <h1>Know what your bike really costs you.</h1>
+        <p class="lede">Log a ride in ten seconds. Bike Log works out your mileage, your spending and your next service for you.</p>
+        <div class="reel-box" aria-hidden="true">
+          <div class="reels">${reels}<span class="reel-sep">km</span></div>
+          <div class="reel-cap">Your odometer, always up to date</div>
+        </div>
+        <ul class="feat-list">
+          <li><div class="feat-ico">🛣️</div><div><b>Daily rides</b><span>Note the odometer in the morning and evening. Distance and gaps are worked out for you.</span></div></li>
+          <li><div class="feat-ico">⛽</div><div><b>Real mileage</b><span>See km per litre for every refuel, with the petrol price you paid.</span></div></li>
+          <li><div class="feat-ico">🔧</div><div><b>Service countdown</b><span>Know exactly how many kilometres are left before the next service.</span></div></li>
+          <li><div class="feat-ico">💰</div><div><b>Where the money goes</b><span>Fuel, repairs, insurance and accessories, split month by month.</span></div></li>
+        </ul>
+      </section>
+
+      <section class="auth-card">
+        <h2>${isUp?'Create your account':'Welcome back'}</h2>
+        <p class="sub">${isUp?'Your rides and expenses stay private to your account.':'Sign in to see your dashboard.'}</p>
+        <div class="seg" role="tablist">
+          <button type="button" role="tab" aria-selected="${!isUp}" class="${!isUp?'on':''}" onclick="showLogin('signin')">Sign in</button>
+          <button type="button" role="tab" aria-selected="${isUp}" class="${isUp?'on':''}" onclick="showLogin('signup')">Create account</button>
+        </div>
+        <form onsubmit="return submitAuth(event)" novalidate>
+          <div class="field full" style="margin-bottom:12px;"><label for="auth-email">Email</label>
+            <input id="auth-email" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com"></div>
+          <div class="field full" style="margin-bottom:14px;"><label for="auth-pass">Password</label>
+            <div class="pw-wrap"><input id="auth-pass" type="password" autocomplete="${isUp?'new-password':'current-password'}" placeholder="${isUp?'At least 8 characters':'Your password'}">
+            <button type="button" class="pw-toggle" onclick="togglePw()" id="pw-toggle" aria-label="Show password">Show</button></div></div>
+          <button class="btn" id="auth-go" type="submit">${isUp?'Create account':'Sign in'}</button>
+        </form>
+        <div id="auth-msg" class="auth-msg" role="status" aria-live="polite"></div>
+        <div class="auth-links">
+          ${isUp?'<span></span>':'<a href="#" class="mut" onclick="doReset();return false;">Forgot password?</a>'}
+          <a href="#" onclick="showLogin('${isUp?'signin':'signup'}');return false;">${isUp?'I already have an account':'New here? Create an account'}</a>
+        </div>
+        <p class="auth-foot">${isUp?'We will email you a link to confirm your address before you can sign in.':'Signed out automatically after '+IDLE_LIMIT_HOURS+' hours without use.'}</p>
+      </section>
     </div>`;
-  const pw=document.getElementById('auth-pass');
-  pw.addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('auth-go').click(); });
+  if(notice) authMsg(notice, '');
+  requestAnimationFrame(()=>requestAnimationFrame(rollReels));
+}
+function togglePw(){
+  const i=document.getElementById('auth-pass'), b=document.getElementById('pw-toggle');
+  const show = i.type==='password'; i.type = show?'text':'password';
+  b.textContent = show?'Hide':'Show'; b.setAttribute('aria-label', show?'Hide password':'Show password');
 }
 function authVals(){ return { email: document.getElementById('auth-email').value.trim(), password: document.getElementById('auth-pass').value }; }
+function setBusy(on){ const b=document.getElementById('auth-go'); if(b){ b.disabled=on; } }
+function submitAuth(ev){
+  if(ev) ev.preventDefault();
+  if(authMode==='signup') doSignUp(); else doSignIn();
+  return false;
+}
 async function doSignIn(){
   const {email,password} = authVals();
-  if(!email||!password){ authMsg('Enter email and password.', true); return; }
-  authMsg('Signing in…');
+  if(!email||!password){ authMsg('Enter your email and password.', 'err'); return; }
+  touchActive(); // a deliberate sign-in always starts a fresh session
+  setBusy(true); authMsg('Signing in…');
   const { error } = await sb.auth.signInWithPassword({ email, password });
-  if(error) authMsg(/confirm/i.test(error.message) ? 'Please confirm your email first — check your inbox.' : 'Wrong email or password.', true);
+  setBusy(false);
+  if(error){
+    authMsg(/confirm/i.test(error.message)
+      ? 'Confirm your email first. Open the link we sent you, then sign in.'
+      : 'That email and password do not match. Check them and try again.', 'err');
+  }
 }
 async function doSignUp(){
   const {email,password} = authVals();
-  if(!email||password.length<8){ authMsg('Enter an email and a password of 8+ characters.', true); return; }
-  authMsg('Creating account…');
+  if(!email){ authMsg('Enter your email address.', 'err'); return; }
+  if(password.length<8){ authMsg('Choose a password with at least 8 characters.', 'err'); return; }
+  setBusy(true); authMsg('Creating your account…');
   const { data: res, error } = await sb.auth.signUp({ email, password, options:{ emailRedirectTo: window.location.origin } });
-  if(error){ authMsg(error.message, true); return; }
-  if(res.session) return; // confirmation disabled: signed in already
-  authMsg('Almost done — we sent a confirmation link to your email. Open it, then sign in.');
+  setBusy(false);
+  if(error){ authMsg(error.message, 'err'); return; }
+  if(res.session) return;
+  authMsg('Check your inbox. We sent a confirmation link to ' + email + '. Open it, then sign in.', 'ok');
 }
 async function doReset(){
   const {email} = authVals();
-  if(!email){ authMsg('Type your email above first.', true); return; }
+  if(!email){ authMsg('Enter your email above, then select Forgot password again.', 'err'); return; }
   const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
-  authMsg(error ? error.message : 'Password reset link sent — check your email.', !!error);
+  authMsg(error ? error.message : 'Reset link sent. Check your inbox.', error?'err':'ok');
 }
 async function doSignOut(){
+  clearActive();
   await sb.auth.signOut();
 }
 
@@ -308,13 +470,32 @@ function startApp(){
     return;
   }
   sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_KEY);
+  const fromEmailLink = /access_token|type=signup|type=recovery/.test(location.hash||'');
+  const intended = location.pathname;
   let lastUid = undefined;
   sb.auth.onAuthStateChange((event, session) => {
     const uid = session && session.user ? session.user.id : null;
     if(uid === lastUid && event !== 'SIGNED_OUT') return; // ignore token refreshes
     lastUid = uid;
-    if(!uid){ currentUser = null; data = null; loadOk = false; showWarn(false); showLogin('signin'); return; }
+    if(!uid){
+      currentUser = null; data = null; loadOk = false; showWarn(false);
+      try{ if(location.pathname !== '/login') history.replaceState({}, '', '/login'); }catch(e){}
+      showLogin('signin');
+      return;
+    }
+    // Existing browser session: only keep it if it was used recently.
+    const fresh = event==='SIGNED_IN' && (!getActive() || fromEmailLink);
+    if(fresh) touchActive();
+    if(event==='INITIAL_SESSION' && fromEmailLink) touchActive();
+    if(sessionExpired()){
+      lastUid = undefined;
+      setTimeout(expireSession, 0);
+      return;
+    }
     currentUser = session.user;
+    document.getElementById('app').className = 'wrap';
+    const pathTab = (intended==='/login'||intended==='/') ? 'dashboard' : tabFromPath(intended);
+    activeTab = (location.pathname==='/login') ? pathTab : tabFromPath(location.pathname);
     document.getElementById('app').innerHTML = '<div class="loading">Booting up the dashboard…</div>';
     setTimeout(loadData, 0); // don't call Supabase inside the auth callback
   });
@@ -532,6 +713,11 @@ function render(){
       <p style="margin-top:6px;"><span style="color:var(--muted);font-size:12px;">${currentUser?currentUser.email:''}</span> · <a href="#" style="color:var(--amber);font-size:12px;" onclick="doSignOut();return false;">Sign out</a></p>
     </header>
 
+    <nav class="tabs" aria-label="Sections">
+${Object.keys(ROUTES).map(k=>`      <a class="tab ${activeTab===k?'active':''}" href="${ROUTES[k]}" onclick="return navTo('${k}',event)">${k==='log'?'Log Ride':k==='refuel'?'Fuel Log':TITLES[k]}</a>`).join('\n')}
+    </nav>
+
+    ${activeTab==='dashboard' ? `
     <div class="cluster">
       ${odometerWheels(cur)}
       <div class="odo-label">Current Odometer (km)</div>
@@ -644,28 +830,24 @@ function render(){
       ${gaps.map(g=>`<div class="hint warn">${dLabel(g.from)} evening (${fmt(g.curEve)}) doesn't match ${dLabel(g.to)} morning (${fmt(g.nextMorn)}) — ${fmt(g.nextMorn-g.curEve)} km unlogged.</div>`).join('')}
     </div>` : ''}
 
-    <div class="tabs">
-      <div class="tab ${activeTab==='log'?'active':''}" onclick="setTab('log')">Log Ride</div>
-      <div class="tab ${activeTab==='refuel'?'active':''}" onclick="setTab('refuel')">Refuel</div>
-      <div class="tab ${activeTab==='service'?'active':''}" onclick="setTab('service')">Service</div>
-      <div class="tab ${activeTab==='expenses'?'active':''}" onclick="setTab('expenses')">Expenses</div>
-      <div class="tab ${activeTab==='spending'?'active':''}" onclick="setTab('spending')">Spending</div>
-      <div class="tab ${activeTab==='mileage'?'active':''}" onclick="setTab('mileage')">Mileage</div>
-      <div class="tab ${activeTab==='export'?'active':''}" onclick="setTab('export')">Backup</div>
-    </div>
+
+    ` : ''}
 
     <div id="tab-content"></div>
     <div class="footer-note">Data is stored privately to your account and persists across sessions.</div>
   `;
 
+  document.title = (TITLES[activeTab]||'Dashboard') + ' · Bike Log';
+  if(location.pathname!==ROUTES[activeTab] && !(activeTab==='refuel' && location.pathname==='/fuelog')) history.replaceState({}, '', ROUTES[activeTab]);
   renderTab();
-  renderDistChart();
+  if(activeTab==='dashboard') renderDistChart();
 }
 
-function setTab(t){ activeTab = t; render(); }
+function setTab(t){ navTo(t); }
 
 function renderTab(){
   const el = document.getElementById('tab-content');
+  if(!el) return;
   if(activeTab==='log') el.innerHTML = logTabHTML();
   else if(activeTab==='refuel') el.innerHTML = refuelTabHTML();
   else if(activeTab==='service') el.innerHTML = serviceTabHTML();
