@@ -203,8 +203,10 @@ a.tab{text-decoration:none; display:inline-block; white-space:nowrap;}
 .auth-bg .fade{position:absolute; left:0; right:0; top:44%; height:34%; background:linear-gradient(#101316, transparent);}
 .auth-bg .beam{position:absolute; left:50%; top:44%; bottom:0; width:100vw; transform:translateX(-50%); background:linear-gradient(to bottom, rgba(242,169,60,.0), rgba(255,222,160,.14)); clip-path:polygon(49.5% 0, 50.5% 0, 78% 100%, 22% 100%);}
 .auth-bg .streaks span{position:absolute; top:44%; width:2px; height:26vh; background:linear-gradient(to bottom, transparent, rgba(255,214,140,.55), transparent); opacity:0; animation:streak 1.6s ease-in infinite;}
-.auth-bg video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.55;}
-.auth-bg .shade{position:absolute; inset:0; background:radial-gradient(ellipse at 30% 40%, rgba(10,12,14,.55), rgba(10,12,14,.82) 70%);}
+.auth-bg video, .auth-bg .bg-photo{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+.auth-bg .bg-photo{filter:saturate(1.05) brightness(.8);}
+.auth-bg .shade{position:absolute; inset:0; background:linear-gradient(90deg, rgba(10,12,14,.88) 0%, rgba(10,12,14,.62) 48%, rgba(10,12,14,.50) 100%), linear-gradient(to top, rgba(10,12,14,.75), transparent 40%);}
+@media (max-width:859px){ .auth-bg .shade{background:linear-gradient(to bottom, rgba(10,12,14,.55), rgba(10,12,14,.85));} }
 @keyframes roadrun{ from{background-position:0 0;} to{background-position:0 220px;} }
 @keyframes streak{ 0%{transform:translateY(0) scaleY(.4); opacity:0;} 15%{opacity:.8;} 100%{transform:translateY(60vh) scaleY(1.6); opacity:0;} }
 .auth-card{background:rgba(28,32,36,.78); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);}
@@ -219,6 +221,12 @@ input[type="date"]::-webkit-calendar-picker-indicator{
   background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F2A93C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='4.5' width='18' height='16' rx='2.5'/><path d='M3 9.5h18M8 2.5v4M16 2.5v4'/></svg>") center/contain no-repeat;
 }
 input[type="date"]::-webkit-calendar-picker-indicator:hover{background-color:rgba(242,169,60,.15); border-radius:6px;}
+
+.app-bg{position:fixed; inset:0; z-index:-1; background:#14171A url('/media/bike-night.jpg') center/cover no-repeat; opacity:.16; filter:blur(3px) saturate(.8); pointer-events:none;}
+
+.auth-hero .lede{color:#C3C8CE;}
+.feat-list span{color:#B3B9C0;}
+.reel-cap{color:#A9B0B8;}
 </style>
 </head>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -226,6 +234,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover{background-color:rgb
 <script src="/config.js"></script>
 <body>
 <div id="conn-warning" style="display:none; background:#3A1F1F; border:1px solid var(--red); color:#F2A9A0; font-size:12px; padding:10px 16px; text-align:center;">⚠️ Can't reach the server right now — changes won't save until it's back.</div>
+<div class="app-bg" aria-hidden="true"></div>
 <div class="wrap" id="app">
   <div class="loading">Booting up the dashboard…</div>
 </div>
@@ -397,12 +406,15 @@ function rollReels(){
 }
 function loginBgHTML(){
   const cfg = window.APP_CONFIG || {};
-  const vid = cfg.LOGIN_VIDEO ? '<video autoplay muted loop playsinline src="'+cfg.LOGIN_VIDEO+'" onerror="this.remove()"></video>' : '';
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const img = '<img class="bg-photo" src="/media/bike-night.jpg" alt="" onerror="this.remove()">';
+  const vid = (cfg.LOGIN_VIDEO && !reduce) ? '<video autoplay muted loop playsinline preload="auto" poster="/media/bike-night.jpg" src="'+cfg.LOGIN_VIDEO+'" onerror="this.remove()"></video>' : '';
   const streaks = [12,24,33,41,59,67,76,88].map((x,i)=>'<span style="left:'+x+'%;animation-delay:'+(i*0.37).toFixed(2)+'s"></span>').join('');
-  return '<div class="auth-bg" aria-hidden="true">'+vid+'<div class="glow"></div>'+
+  // Layers: animated road (fallback) < photo < video < dark shade for readability
+  return '<div class="auth-bg" aria-hidden="true"><div class="glow"></div>'+
     '<svg class="hills" viewBox="0 0 1200 80" preserveAspectRatio="none"><path d="M0 80 L0 48 L90 30 L180 46 L300 22 L420 44 L520 28 L640 50 L760 26 L880 46 L1000 24 L1100 42 L1200 30 L1200 80Z" fill="#0b0d0f"/></svg>'+
     '<div class="road-wrap"><div class="road"></div></div><div class="fade"></div><div class="beam"></div>'+
-    '<div class="streaks">'+streaks+'</div><div class="shade"></div></div>';
+    '<div class="streaks">'+streaks+'</div>'+img+vid+'<div class="shade"></div></div>';
 }
 function showLogin(mode){
   authMode = mode || 'signin';
@@ -1496,7 +1508,7 @@ function mileageTabHTML(){
       ${results.length===0 ? `<div class="empty">Need at least 2 refuels to calculate km/l.</div>` : `
       <table>
         <tr><th>Fuel Bought On</th><th>Distance Covered</th><th>Liters</th><th>km/l</th></tr>
-        ${results.map(r=>`<tr><td>${dLabel(r.date)}</td><td>${fmt(r.distKm)} km</td><td>${r.liters.toFixed(2)} L</td><td>${r.kmpl}</td></tr>`).join('')}
+        ${[...results].reverse().map(r=>`<tr><td>${dLabel(r.date)}</td><td>${fmt(r.distKm)} km</td><td>${r.liters.toFixed(2)} L</td><td>${r.kmpl}</td></tr>`).join('')}
       </table>`}
       <div class="hint">Distance ridden until the next refuel, divided by the liters bought at this refuel — i.e. how far that tank of fuel actually took you.</div>
     </div>
