@@ -1,0 +1,33 @@
+/* BASE
+   Fonts, colour variables, reset, page background, page header. */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg:#14171A;
+  --panel:#1C2024;
+  --panel-raised:#22262B;
+  --amber:#F2A93C;
+  --green:#6FCF97;
+  --red:#E4572E;
+  --text:#EDEDED;
+  --muted:#8B9199;
+  --border:#2C3136;
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  padding:24px 16px 80px;
+  min-height:100vh;
+}
+.wrap{max-width:720px; margin:0 auto;}
+
+header{margin-bottom:24px;}
+header h1{
+  font-size:22px; font-weight:700; letter-spacing:-0.02em;
+  display:flex; align-items:center; gap:8px;
+}
+header p{color:var(--muted); font-size:13px; margin-top:4px;}
