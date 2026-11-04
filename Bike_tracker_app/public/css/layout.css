@@ -1,0 +1,33 @@
+/* APP LAYOUT
+   Side menu (rail), main area, page background photo, responsive widths. */
+
+.app-bg{position:fixed; inset:0; z-index:-1; background:#14171A url('/media/bike-night.jpg') center/cover no-repeat; opacity:.22; filter:blur(3px) saturate(.8); pointer-events:none;}
+
+.wrap.wide{max-width:1560px; padding:0 8px;}
+.shell{display:block;}
+.rail header{margin-bottom:6px;}
+.rail-foot{display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:12px; margin-top:6px;}
+.rail-foot .who{color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.rail-foot .signout{color:var(--amber); text-decoration:none; font-weight:600; white-space:nowrap;}
+.tab .ico{margin-right:6px;}
+
+@media (min-width:1000px){
+  body{padding:24px 24px 60px;}
+  .shell{display:grid; grid-template-columns:250px minmax(0,1fr); gap:26px; align-items:start;}
+  .rail{position:sticky; top:24px; display:flex; flex-direction:column; gap:14px; min-height:calc(100vh - 48px);
+    background:rgba(24,27,31,.72); -webkit-backdrop-filter:blur(16px); backdrop-filter:blur(16px);
+    border:1px solid var(--border); border-radius:20px; padding:22px 14px 16px;}
+  .rail header{padding:0 8px 10px; border-bottom:1px solid var(--border);}
+  .rail header h1{font-size:21px;}
+  .rail header p{font-size:12px; line-height:1.45;}
+  .rail .tabs{flex-direction:column; margin:0; overflow:visible; gap:3px;}
+  .rail a.tab{display:flex; align-items:center; border-radius:10px; padding:11px 12px; font-size:14px; background:none; border:1px solid transparent;}
+  .rail a.tab:hover{background:rgba(255,255,255,.04); color:var(--text);}
+  .rail a.tab.active{background:rgba(242,169,60,.12); color:var(--amber); border-color:rgba(242,169,60,.30); box-shadow:inset 3px 0 0 var(--amber);}
+  .rail-foot{margin-top:auto; padding:12px 8px 0; border-top:1px solid var(--border);}
+  .main{padding-top:2px;}
+}
+
+@media (max-width:999px){
+  .wrap.wide{max-width:900px;}
+}

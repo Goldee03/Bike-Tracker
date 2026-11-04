@@ -4,17 +4,52 @@ A mileage, fuel, service and expense tracker with individual user accounts.
 
 The application is a static site hosted on Vercel. It uses Supabase Authentication for sign-in and the Supabase `user_data` table for each user's records. Row Level Security (RLS) ensures users can access only their own data.
 
-## Project layout
+## Where to find things
 
-- `public/index.html` - application UI, authentication and dashboard
-- `public/config.js` - Supabase project URL and public publishable key
-- `db/phase2_auth.sql` - creates the per-user data table and its RLS policies; retained as the database setup reference
+```
+public/
+  index.html            page frame only: lists the CSS and JS files below, in load order
+  config.js             Supabase URL + publishable key (and optional login video)
+  css/
+    base.css            fonts, colours (variables), reset
+    components.css      shared pieces: tabs, panels, form fields, buttons, tables, date icon
+    dashboard.css       Dashboard page
+    pages.css           layout of the other pages (Log Ride, Fuel Log, Service, ...) + spending bars
+    layout.css          side menu, page frame, responsive widths, background photo
+    auth.css            Login page and its night-ride background
+  js/
+    core/               shared plumbing, no page-specific code
+      state.js          global variables
+      utils.js          formatting helpers (money, dates)
+      stats.js          ride calculations (odometer, month totals, gaps)
+      data.js           default data, migration, load/save to Supabase
+      router.js         page URLs (/logride, /fuellog ...), back button
+      session.js        auto sign-out after inactivity (IDLE_LIMIT_HOURS)
+    auth/auth.js        login, register, reset password, sign out
+    features/           ONE FILE PER PAGE
+      dashboard.js      /dashboard
+      logride.js        /logride
+      fuellog.js        /fuellog
+      service.js        /service
+      expenses.js       /expenses
+      spending.js       /spending
+      mileage.js        /mileage
+      backup.js         /backup
+    app.js              side menu + page frame, picks the page, starts the app
+  media/                login/background photos and video
+db/
+  phase2_auth.sql       per-user data table and RLS policies (database setup reference)
+```
+
+**Rule of thumb:** to change a page, open `js/features/<page>.js` (what it shows and does) and, if it is about looks, `css/dashboard.css` or `css/pages.css`. Anything every page uses is in `core/` or `css/components.css`.
+
+All files are plain scripts (no build step). They share globals and load in the order listed in `index.html`, so a new file must be added to that list.
 
 ## Pages
-`/login`, `/dashboard`, `/logride`, `/fuellog` (also `/fuelog`), `/service`, `/expenses`, `/spending`, `/mileage`, `/backup`. `vercel.json` sends every non-file path to `index.html`; the app reads the path to pick the page.
+`/login`, `/dashboard`, `/logride`, `/fuellog` (also `/fuelog`), `/service`, `/expenses`, `/spending`, `/mileage`, `/backup`. `vercel.json` sends every non-file path to `index.html`; `js/core/router.js` reads the path to pick the page.
 
 ## Sessions
-Users are signed out after `IDLE_LIMIT_HOURS` (default 2, set near the top of the auth code in `public/index.html`) without using the app. This is enforced in the browser. For server-side enforcement, Supabase Pro has Auth -> Sessions -> inactivity timeout.
+Users are signed out after `IDLE_LIMIT_HOURS` (default 2, set in `public/js/core/session.js`) without using the app. This is enforced in the browser. For server-side enforcement, Supabase Pro has Auth -> Sessions -> inactivity timeout.
 
 ## Setup
 

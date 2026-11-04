@@ -1,0 +1,69 @@
+/* DASHBOARD PAGE (/dashboard)
+   Odometer banner, stat cards, service bar, dashboard grid placement. */
+
+.odo-row{display:flex; justify-content:center; gap:4px; margin:18px 0 6px;}
+.odo-digit{
+  background:#0E1013;
+  border:1px solid var(--border);
+  border-radius:4px;
+  width:34px; height:48px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'DM Mono', monospace;
+  font-size:26px; font-weight:500;
+  color:var(--amber);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.6), 0 0 8px rgba(242,169,60,0.15);
+}
+.odo-label{text-align:center; color:var(--muted); font-size:11px; letter-spacing:0.08em; text-transform:uppercase; margin-top:2px;}
+
+.cluster{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:20px 16px;
+  margin-bottom:14px;
+}
+
+.stat-grid{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+  margin-bottom:10px;
+}
+.stat-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:14px 12px;
+}
+.stat-card .label{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px;}
+.stat-card .value{font-family:'DM Mono',monospace; font-size:20px; font-weight:500;}
+.stat-card .sub{font-size:11px; color:var(--muted); margin-top:2px;}
+.stat-card.money .value{color:var(--green);}
+
+.service-bar{height:8px; background:#0E1013; border-radius:4px; overflow:hidden; margin-top:8px; border:1px solid var(--border);}
+.service-fill{height:100%; background:linear-gradient(90deg, var(--green), var(--amber)); transition:width .3s;}
+
+.dash-grid{display:grid; grid-template-columns:repeat(12,1fr); gap:14px;}
+.dash-grid > *{grid-column:span 12; margin-bottom:0 !important; min-width:0;}
+
+.svc-big{font-family:'DM Mono',monospace; font-size:44px; font-weight:500; color:var(--amber); line-height:1; margin:6px 0 14px;}
+.svc-big small{font-family:'Inter',sans-serif; font-size:13px; color:var(--muted); margin-left:8px; font-weight:500;}
+.dash-cluster{background:linear-gradient(90deg, rgba(20,23,26,.97) 35%, rgba(20,23,26,.55)), url('/media/bike-night.jpg') right center/cover no-repeat;}
+
+@media (min-width:1000px){
+  .dash-cluster{grid-column:span 7; order:1; display:flex; flex-direction:column; justify-content:center; padding:34px 28px;}
+  .dash-service{grid-column:span 5; order:2;}
+  .dash-stats{grid-column:span 12; order:3;}
+  .dash-chart{grid-column:span 7; order:4;}
+  .dash-range{grid-column:span 5; order:5;}
+  .dash-refill{grid-column:span 5; order:6;}
+  .dash-gaps{grid-column:span 7; order:7;}
+  .dash-refill:last-child{grid-column:span 12;}
+  .dash-service{display:flex; flex-direction:column; justify-content:center;}
+  .dash-cluster .odo-row{gap:7px;}
+  .dash-cluster .odo-digit{width:60px; height:86px; font-size:48px; border-radius:7px;}
+  .dash-cluster .odo-label{font-size:12px; margin-top:8px;}
+  .dash-chart .chart-box{height:260px;}
+}
+
+@media (min-width:1280px){
+  .dash-stats{grid-column:span 6;}
+}
