@@ -15,3 +15,16 @@ const monthLabel = ym => {
   const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return `${months[parseInt(m)-1]} ${y}`;
 };
+
+// "12 Aug 2026"
+const fmtDateLong = iso => {
+  const [y,m,d] = iso.split('-');
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+};
+// whole days from an ISO date to today
+const daysSince = iso => Math.round((new Date(todayISO()+'T00:00:00Z') - new Date(iso+'T00:00:00Z')) / 86400000);
+const daysAgoLabel = iso => {
+  const n = daysSince(iso);
+  return n<=0 ? 'today' : n===1 ? '1 day ago' : `${n} days ago`;
+};
