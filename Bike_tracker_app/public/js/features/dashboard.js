@@ -81,6 +81,7 @@ function renderDistChart(){
 }
 
 function dashboardHTML(){
+  const lastSvc = latestService();
   const cur = latestOdometer();
   const tDist = todayDistance();
   const now = new Date();
@@ -189,9 +190,14 @@ function dashboardHTML(){
     <div class="panel dash-service">
       <h2>🔧 Service Countdown</h2>
       <div class="svc-big">${fmt(svc.remaining)}<small>km to next service</small></div>
-      <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--muted);">
-        <span>Last: ${fmt(latestServiceOdo())} km</span>
-        <span>Next: ${fmt(nextServiceOdo())} km</span>
+      <div style="display:flex; justify-content:space-between; gap:12px; font-size:13px; color:var(--muted); line-height:1.6;">
+        <div>
+          <div>Last service: ${fmt(latestServiceOdo())} km</div>
+          <div>${lastSvc ? `${fmtDateLong(lastSvc.date)} · ${daysAgoLabel(lastSvc.date)}` : 'No service recorded yet'}</div>
+        </div>
+        <div style="text-align:right;">
+          <div>Next service: ${fmt(nextServiceOdo())} km</div>
+        </div>
       </div>
       <div class="service-bar"><div class="service-fill" style="width:${svc.pct}%"></div></div>
       <div class="hint ${svc.remaining<200?'warn':''}">${fmt(svc.remaining)} km remaining until next service${svc.remaining<200?' — due soon!':''}</div>

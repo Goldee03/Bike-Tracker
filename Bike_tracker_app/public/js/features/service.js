@@ -1,10 +1,15 @@
 /* SERVICE page (/service)
    Service records, service interval, and the service countdown calculations. */
 
+// The most recent service record (by date), or null if none yet.
+function latestService(){
+  if(data.services.length===0) return null;
+  return [...data.services].sort((a,b)=> b.date.localeCompare(a.date) || b.odometer-a.odometer)[0];
+}
+
 function latestServiceOdo(){
-  if(data.services.length===0) return 0;
-  const sorted = [...data.services].sort((a,b)=> b.date.localeCompare(a.date) || b.odometer-a.odometer);
-  return sorted[0].odometer;
+  const s = latestService();
+  return s ? s.odometer : 0;
 }
 
 function nextServiceOdo(){
